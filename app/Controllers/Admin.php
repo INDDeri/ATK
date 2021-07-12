@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use Myth\Auth\Models\UserModel;
 use Myth\Auth\Entities\User;
+use App\Models\UsersModel;
 
 class Admin extends BaseController
 {
@@ -15,36 +16,24 @@ class Admin extends BaseController
 		$this->db      = \Config\Database::connect();
 		$this->builder = $this->db->table('users');
 		$this->userModel = new UserModel();
+		$this->user = new UsersModel();
 	}
 
 	public function index()
 	{
-		$data['title'] = 'User List';
-		// $users = new \Myth\Auth\Models\UserModel();
-		// $data['users'] = $users->findAll();
-
-		$this->builder->select('users.id as userid, username, email, name');
-		$this->builder->join('auth_groups_users', 'auth_groups_users.user_id = users.id');
-		$this->builder->join('auth_groups', 'auth_groups.id = auth_groups_users.group_id');
-		$query = $this->builder->get();
-
-		$data['users'] = $query->getResult();
+		$data = array(
+			'title' => 'User List',
+			'users' => $this->user->getUser()
+		);
 		return view('admin/index', $data);
 	}
 
-	public function detail($id = 0)
+	public function detail($id = null)
 	{
-		$data['title'] = 'User Detail';
-		// $users = new \Myth\Auth\Models\UserModel();
-		// $data['users'] = $users->findAll();
-
-		$this->builder->select('users.id as userid, username, email, fullname, user_image, name');
-		$this->builder->join('auth_groups_users', 'auth_groups_users.user_id = users.id');
-		$this->builder->join('auth_groups', 'auth_groups.id = auth_groups_users.group_id');
-		$this->builder->where('users.id', $id);
-		$query = $this->builder->get();
-
-		$data['user'] = $query->getRow();
+		$data = array(
+			'title' => 'User Detail',
+			'user' => $this->user->getUser($id)->getRow()
+		);
 
 		if (empty($data['user'])) {
 			return redirect()->to('/admin');
@@ -57,7 +46,8 @@ class Admin extends BaseController
 	{
 		$data = [
 			'title' => 'Form Tambah User',
-			'validation' => \Config\Services::validation()
+			'validation' => \Config\Services::validation(),
+			'roles' => $this->user->getRole()
 		];
 
 		return view('admin/create', $data);
@@ -81,6 +71,7 @@ class Admin extends BaseController
 
 	public function save()
 	{
+		$role = $this->request->getVar('role');
 		$slug = url_title($this->request->getVar('username'), '-', true);
 		$data = array(
 			'email' => $this->request->getVar('email'),
@@ -90,7 +81,7 @@ class Admin extends BaseController
 			'active' => 1
 		);
 		$dt = new User($data);
-		$this->userModel->withGroup('admin')->save($dt);
+		$this->userModel->withGroup($role)->save($dt);
 
 		return redirect()->to('/admin');
 	}

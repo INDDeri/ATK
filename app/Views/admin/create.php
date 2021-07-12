@@ -27,11 +27,12 @@
                 </div>
 
                 <div class="row mb-3">
-                    <label for="name" class="col-sm-2 col-form-label">pilih Role</label>
+                    <label for="name" class="col-sm-2 col-form-label">pilih Role<br></label>
                     <div class="col-sm-10">
                         <select name="role" id="role">
-                            <option value="admin">Admin</option>
-                            <option value="user">User</option>
+                            <?php foreach($roles->getResult() as $role): ?>
+                            <option value="<?=$role->name;?>"><?=$role->name;?> - <?=$role->description;?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
